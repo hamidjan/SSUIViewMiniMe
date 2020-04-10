@@ -20,10 +20,31 @@
     NSInteger viewRatio;
 }
 
+- (id)initWithCoder:(NSCoder *)aDecoder {
+    self = [super initWithCoder:aDecoder];
+    
+    if (self) {
+        [self setBackgroundColor:[UIColor clearColor]];
+        
+        self.scrollView = [[UIScrollView alloc]initWithFrame:CGRectMake(0, 0, WIDTH, HEIGHT)];
+        self.scrollView.contentMode = UIViewContentModeScaleAspectFill;
+        self.scrollView.backgroundColor = [UIColor clearColor];
+        self.scrollView.delegate = self;
+        self.scrollView.alwaysBounceHorizontal = YES;
+        self.scrollView.alwaysBounceVertical = YES;
+        self.scrollView.showsHorizontalScrollIndicator = NO;
+        self.scrollView.showsVerticalScrollIndicator = NO;
+        self.scrollView.maximumZoomScale = 20;
+        
+        [self addSubview:self.scrollView];
+    }
+    return self;
+}
+
 -(SSUIViewMiniMe *)initWithView:(UIView *)viewToMap withRatio:(NSInteger)ratio
 {
     self = [super initWithFrame:viewToMap.frame];
-
+    
     if (self)
     {
         zoomedView = viewToMap;
@@ -36,7 +57,7 @@
         self.scrollView.maximumZoomScale = 20;
         [self.scrollView setBounces:NO];
         [self.scrollView addSubview:viewToMap];
-
+        
         
         UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapAction:)];
         tapGesture.numberOfTapsRequired=1;
@@ -78,6 +99,20 @@
     return self;
 }
 
+- (void)setUpViewWithView:(UIImageView *)viewToMap withRatio:(NSInteger)ratio {
+    zoomedView = viewToMap;
+    viewRatio = ratio;
+    
+    CGFloat heightRatio = self.scrollView.frame.size.height/viewToMap.frame.size.height;
+    NSLog(@"height ratio is %lf", heightRatio);
+    
+    self.scrollView.minimumZoomScale = heightRatio;
+    [self.scrollView setZoomScale:heightRatio animated:YES];
+    
+    [[self.scrollView subviews] makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    
+    [self.scrollView addSubview:viewToMap];
+}
 
 - (void)dragBegan:(UIControl *)c withEvent:ev
 {
@@ -161,7 +196,7 @@
                self.scrollView.contentOffset.y/viewRatio/self.scrollView.zoomScale,
                miniMeIndicator.frame.size.width,
                miniMeIndicator.frame.size.height);
-
+    
     if (nil != self.delegate && [self.delegate respondsToSelector:@selector(enlargedView:didScroll:)])
     {
         [self.delegate enlargedView:self didScroll:self.scrollView];
